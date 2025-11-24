@@ -1,0 +1,3373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlexWorkspace - Business Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --dark-bg: #1e293b;
+            --sidebar-width: 280px;
+            --grid-size: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: #334155;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            color: white;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .nav-icon {
+            margin-right: 0.75rem;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Dropdown styles */
+        .nav-dropdown {
+            position: relative;
+        }
+
+        .nav-dropdown-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .nav-dropdown-toggle:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .nav-dropdown-toggle.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .dropdown-icon {
+            margin-left: auto;
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .nav-dropdown.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        .nav-dropdown-menu {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 0.5rem 1rem;
+            overflow: hidden;
+        }
+
+        .nav-dropdown.active .nav-dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8fafc;
+            color: var(--primary-color);
+        }
+
+        .dropdown-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .workspace-toolbar {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .tool-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tool-btn:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .tool-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px),
+                        linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+            background-size: var(--grid-size) var(--grid-size);
+        }
+
+        .workspace-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Blobs */
+        .blob {
+            position: absolute;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            cursor: move;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            min-width: 200px;
+            min-height: 150px;
+            overflow: hidden;
+        }
+
+        .blob:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .blob.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .blob.dragging {
+            opacity: 0.8;
+            z-index: 1000;
+        }
+
+        .blob-header {
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+        }
+
+        .blob-header:active {
+            cursor: grabbing;
+        }
+
+        .blob-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.875rem;
+        }
+
+        .blob-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .blob-control {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .blob-edit {
+            background-color: #f1f5f9;
+            color: var(--secondary-color);
+        }
+
+        .blob-edit:hover {
+            background-color: #e2e8f0;
+        }
+
+        .blob-delete {
+            background-color: #fef2f2;
+            color: var(--danger-color);
+        }
+
+        .blob-delete:hover {
+            background-color: #fee2e2;
+        }
+
+        .blob-resize {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nw-resize;
+            background: linear-gradient(-45deg, transparent 0%, transparent 35%, var(--primary-color) 35%, var(--primary-color) 65%, transparent 65%);
+        }
+
+        .blob-content {
+            padding: 1rem;
+            height: calc(100% - 50px);
+            overflow: auto;
+        }
+
+        /* Blob Types */
+        .blob-button {
+            text-align: center;
+        }
+
+        .blob-btn-large {
+            width: 100%;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .blob-btn-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .blob-text {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .blob-app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .blob-app-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .blob-app-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .blob-app-subtitle {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .blob-app-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 2px dashed #e2e8f0;
+        }
+
+        .blob-app-placeholder {
+            text-align: center;
+            color: var(--secondary-color);
+        }
+
+        .blob-app-placeholder svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Profile Page */
+        .profile-page {
+            display: none;
+            padding: 2rem;
+        }
+
+        .profile-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-role {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: white;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #5b21b6;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 0.5rem 0;
+            z-index: 1500;
+            min-width: 150px;
+        }
+
+        .context-menu-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Client Dashboard Styles */
+        .client-dashboard-page {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .client-metrics {
+            display: flex;
+            gap: 3rem;
+        }
+
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .metric-percentage {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+            font-weight: 400;
+        }
+
+        .metric-bar {
+            width: 200px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .edit-layout-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .edit-layout-btn:hover {
+            background-color: #5b21b6;
+        }
+
+        /* AI Chatbot Styles */
+        .ai-chatbot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 2000;
+            overflow: hidden;
+        }
+
+        .ai-chatbot.show {
+            display: flex;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #374151;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .chatbot-input {
+            padding: 1rem;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chatbot-input-field {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.875rem;
+        }
+
+        .chatbot-send-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .chatbot-send-btn:hover {
+            background-color: #5b21b6;
+        }
+
+        /* Database Management Styles */
+        .database-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .database-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .database-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .create-db-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .create-db-btn:hover {
+            background-color: #5b21b6;
+        }
+
+        .databases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .database-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            background: #f8fafc;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .database-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .database-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .database-type {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .database-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .stat-label {
+            color: var(--secondary-color);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .database-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .db-action-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .db-edit-btn {
+            background-color: #dbeafe;
+            color: var(--primary-color);
+        }
+
+        .db-edit-btn:hover {
+            background-color: #bfdbfe;
+        }
+
+        .db-connect-btn {
+            background-color: #dcfce7;
+            color: var(--success-color);
+        }
+
+        .db-connect-btn:hover {
+            background-color: #bbf7d0;
+        }
+
+        .db-delete-btn {
+            background-color: #fef2f2;
+            color: var(--danger-color);
+        }
+
+        .db-delete-btn:hover {
+            background-color: #fee2e2;
+        }
+
+        /* API Management Styles */
+        .api-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .api-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .api-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .create-api-btn {
+            background: var(--success-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .create-api-btn:hover {
+            background-color: #059669;
+        }
+
+        .apis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .api-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            background: #f8fafc;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .api-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .api-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .api-endpoint {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .api-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .api-status.active {
+            background-color: #dcfce7;
+            color: var(--success-color);
+        }
+
+        .api-status.inactive {
+            background-color: #fef3c7;
+            color: var(--warning-color);
+        }
+
+        .api-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .api-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .api-action-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .api-test-btn {
+            background-color: #dbeafe;
+            color: var(--primary-color);
+        }
+
+        .api-test-btn:hover {
+            background-color: #bfdbfe;
+        }
+
+        .api-edit-btn {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .api-edit-btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        .api-delete-btn {
+            background-color: #fef2f2;
+            color: var(--danger-color);
+        }
+
+        .api-delete-btn:hover {
+            background-color: #fee2e2;
+        }
+
+        .client-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            transition: all 0.2s;
+        }
+
+        .nav-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-tab-icon {
+            font-size: 1.25rem;
+        }
+
+        .nav-filters {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .filter-icon {
+            font-size: 1.25rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .kpi-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kpi-content {
+            flex: 1;
+        }
+
+        .kpi-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-subtitle {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .dashboard-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .highlight-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .highlight-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .highlight-status {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .highlight-status.positive {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .highlight-label {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .ai-summary {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .ai-icon {
+            font-size: 2rem;
+        }
+
+        .ai-text p {
+            margin: 0;
+            color: var(--secondary-color);
+            line-height: 1.5;
+        }
+
+        .chart-placeholder {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-placeholder p {
+            color: var(--secondary-color);
+            margin-bottom: 2rem;
+        }
+
+        .mock-chart {
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 1rem;
+            height: 150px;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .chart-bar {
+            width: 40px;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+
+        .tickets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ticket-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .ticket-item:hover {
+            background: #f1f5f9;
+        }
+
+        .ticket-icon {
+            font-size: 1.5rem;
+        }
+
+        .ticket-content {
+            flex: 1;
+        }
+
+        .ticket-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .ticket-status {
+            font-size: 0.875rem;
+            color: var(--warning-color);
+            font-weight: 500;
+        }
+
+        .documents-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .document-item:hover {
+            background: #f1f5f9;
+        }
+
+        .document-icon {
+            font-size: 1.5rem;
+        }
+
+        .document-info {
+            flex: 1;
+        }
+
+        .document-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .document-meta {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .client-footer {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            text-decoration: none;
+            color: var(--secondary-color);
+            border-radius: 8px;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+
+        .footer-link:hover {
+            background: #f8fafc;
+            color: var(--primary-color);
+        }
+
+        .footer-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .footer-icon {
+            font-size: 1.5rem;
+        }
+
+        .footer-link span {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .client-metrics {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .metric-bar {
+                width: 150px;
+            }
+
+            .client-nav {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .nav-tabs, .nav-filters {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .client-dashboard-page {
+                padding: 1rem;
+            }
+
+            .client-header {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-sections {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-nav {
+                gap: 1rem;
+            }
+
+            .footer-link {
+                min-width: 60px;
+                padding: 0.75rem 0.5rem;
+            }
+
+            .footer-link span {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .workspace-toolbar {
+                flex-wrap: wrap;
+            }
+
+            .tool-btn {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .top-bar {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>FlexWorkspace</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="#workspace" class="nav-link active" data-page="workspace">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Workspace
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#profile" class="nav-link" data-page="profile">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Profile
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-dropdown" id="clientPortalDropdown">
+                        <button class="nav-dropdown-toggle" data-page="client-portal">
+                            <div style="display: flex; align-items: center;">
+                                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                                Client Portal
+                            </div>
+                            <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="#client-dashboard" class="dropdown-item active" data-page="client-dashboard">
+                                Client AI Dashboard
+                            </a>
+                            <a href="#client-analytics" class="dropdown-item" data-page="client-analytics">
+                                Analytics & Reports
+                            </a>
+                            <a href="#client-campaigns" class="dropdown-item" data-page="client-campaigns">
+                                Campaign Management
+                            </a>
+                            <a href="#client-finance" class="dropdown-item" data-page="client-finance">
+                                Financial Overview
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    <a href="#settings" class="nav-link" data-page="settings">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <h2 class="page-title">Workspace</h2>
+                <div class="workspace-toolbar">
+                    <button class="tool-btn" id="createBlobBtn" onclick="showCreateBlobModal()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Blob
+                    </button>
+                    <button class="tool-btn" id="saveWorkspaceBtn" onclick="saveWorkspace()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                        </svg>
+                        Save
+                    </button>
+                    <button class="tool-btn" id="loadWorkspaceBtn" onclick="loadWorkspace()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Load
+                    </button>
+                    <button class="tool-btn" id="clearWorkspaceBtn" onclick="clearWorkspace()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Workspace -->
+            <div class="workspace">
+                <div class="workspace-canvas" id="workspaceCanvas">
+                    <!-- Sample blobs will be added here -->
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div class="profile-page" id="profilePage">
+                <div class="profile-header">
+                    <div class="profile-avatar">J</div>
+                    <h3 class="profile-name">Jones Business</h3>
+                    <p class="profile-role">Business Owner & Entrepreneur</p>
+                    <p style="color: var(--secondary-color); max-width: 600px; margin: 0 auto;">
+                        Welcome to your flexible business workspace. Create, organize, and manage your business tools
+                        with our innovative blob system. Customize your dashboard to fit your workflow.
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <h4 style="margin-bottom: 1rem; font-size: 1.125rem; font-weight: 600;">Quick Stats</h4>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Total Blobs:</span>
+                            <span id="totalBlobsStat">0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Workspaces Saved:</span>
+                            <span id="workspacesSavedStat">0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Last Updated:</span>
+                            <span id="lastUpdatedStat">Never</span>
+                        </div>
+                    </div>
+
+                    <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <h4 style="margin-bottom: 1rem; font-size: 1.125rem; font-weight: 600;">Workspace Tips</h4>
+                        <ul style="color: var(--secondary-color); line-height: 1.6;">
+                            <li>• Right-click on blobs to access quick actions</li>
+                            <li>• Drag blobs to rearrange your workspace</li>
+                            <li>• Use the resize handle to adjust blob sizes</li>
+                            <li>• Save your workspace to preserve your layout</li>
+                            <li>• Create different blob types for various content</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Portal Dashboard -->
+            <div class="client-dashboard-page" id="clientDashboardPage">
+                <!-- Top Metrics Header -->
+                <div class="client-header">
+                    <div class="client-metrics">
+                        <div class="metric-item">
+                            <div class="metric-label">Health Score</div>
+                            <div class="metric-value">92/100 <span class="metric-percentage">(92%)</span></div>
+                            <div class="metric-bar">
+                                <div class="metric-bar-fill" style="width: 92%; background: linear-gradient(90deg, var(--success-color), #22c55e);"></div>
+                            </div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Learning Efficiency</div>
+                            <div class="metric-value">65% <span class="metric-percentage">(65%)</span></div>
+                            <div class="metric-bar">
+                                <div class="metric-bar-fill" style="width: 65%; background: linear-gradient(90deg, var(--warning-color), #f59e0b);"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <button class="edit-layout-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit Layout
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Navigation -->
+                <div class="client-nav">
+                    <div class="nav-tabs">
+                        <div class="nav-tab active">
+                            <span class="nav-tab-icon">🤖</span>
+                            Client AI Dashboard
+                        </div>
+                    </div>
+                    <div class="nav-filters">
+                        <div class="nav-filter">
+                            <span class="filter-icon">📊</span>
+                            Marketing Department
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981, #22c55e);">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" style="color: white;">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">AI Email Agent</h3>
+                            <div class="kpi-value">95%</div>
+                            <div class="kpi-subtitle">AI Email Agent Eff: v1.2 / Active</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" style="color: white;">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Mother of AI Creator</h3>
+                            <div class="kpi-value">88%</div>
+                            <div class="kpi-subtitle">Mother of AI Creator Eff: x0.9</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, var(--primary-color), #8b5cf6);">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" style="color: white;">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Total Leads Q4</h3>
+                            <div class="kpi-value">1,280</div>
+                            <div class="kpi-subtitle">Total Leads Q4</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" style="color: white;">
+                                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Avg. Project Margin</h3>
+                            <div class="kpi-value">24.5%</div>
+                            <div class="kpi-subtitle">Avg. Project Margin</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, #ec4899, #be185d);">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" style="color: white;">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.409l-7-14z"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">New Leads Today</h3>
+                            <div class="kpi-value">34</div>
+                            <div class="kpi-subtitle">New Leads Today</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, #64748b, #475569);">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" style="color: white;">
+                                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Total Spend</h3>
+                            <div class="kpi-value">$45k</div>
+                            <div class="kpi-subtitle">Total Spend</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Sections -->
+                <div class="dashboard-sections">
+                    <!-- Top AI Highlights -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Top AI Highlights</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="highlight-grid">
+                                <div class="highlight-item">
+                                    <div class="highlight-value">3.1%</div>
+                                    <div class="highlight-label">CTR Lift</div>
+                                </div>
+                                <div class="highlight-item">
+                                    <div class="highlight-status positive">✓</div>
+                                    <div class="highlight-label">Budget On Track</div>
+                                </div>
+                                <div class="highlight-item">
+                                    <div class="highlight-status positive">✓</div>
+                                    <div class="highlight-label">No Safety Issues</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant Summary -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">AI Assistant Summary</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="ai-summary">
+                                <div class="ai-icon">🤖</div>
+                                <div class="ai-text">
+                                    <p>AI agent automated 8 tasks, saving 12 hours of admin time this week.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campaign Performance -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Campaign Performance</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="chart-placeholder">
+                                <div class="chart-icon">📊</div>
+                                <p>Bar chart showing consistent performance across periods</p>
+                                <div class="mock-chart">
+                                    <div class="chart-bar" style="height: 80%; background: var(--primary-color);"></div>
+                                    <div class="chart-bar" style="height: 75%; background: #10b981;"></div>
+                                    <div class="chart-bar" style="height: 85%; background: #f59e0b;"></div>
+                                    <div class="chart-bar" style="height: 78%; background: #ef4444;"></div>
+                                    <div class="chart-bar" style="height: 82%; background: #8b5cf6;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subcontractor Efficiency -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Subcontractor Efficiency</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="chart-placeholder">
+                                <div class="chart-icon">📈</div>
+                                <p>Bar chart showing high, relatively consistent performance across periods</p>
+                                <div class="mock-chart">
+                                    <div class="chart-bar" style="height: 90%; background: #10b981;"></div>
+                                    <div class="chart-bar" style="height: 85%; background: var(--primary-color);"></div>
+                                    <div class="chart-bar" style="height: 88%; background: #f59e0b;"></div>
+                                    <div class="chart-bar" style="height: 92%; background: #8b5cf6;"></div>
+                                    <div class="chart-bar" style="height: 87%; background: #ef4444;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Open Tickets -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Open Tickets</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="tickets-list">
+                                <div class="ticket-item">
+                                    <div class="ticket-icon">💬</div>
+                                    <div class="ticket-content">
+                                        <div class="ticket-title">Integrate Telegram</div>
+                                        <div class="ticket-status">High Priority</div>
+                                    </div>
+                                </div>
+                                <div class="ticket-item">
+                                    <div class="ticket-icon">📊</div>
+                                    <div class="ticket-content">
+                                        <div class="ticket-title">Review Q1 Budget</div>
+                                        <div class="ticket-status">Medium Priority</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Documents -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Financial Documents</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="documents-list">
+                                <div class="document-item" onclick="openDocument('q4-pnl')">
+                                    <div class="document-icon">📄</div>
+                                    <div class="document-info">
+                                        <div class="document-title">Q4 P&L Report</div>
+                                        <div class="document-meta">Updated 2 days ago</div>
+                                    </div>
+                                </div>
+                                <div class="document-item" onclick="openDocument('invoice-4567')">
+                                    <div class="document-icon">🧾</div>
+                                    <div class="document-info">
+                                        <div class="document-title">Invoice 4567 Due</div>
+                                        <div class="document-meta">Due in 5 days</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Management Section -->
+                <div class="database-panel">
+                    <div class="database-header">
+                        <h3 class="database-title">Database Management</h3>
+                        <button class="create-db-btn" onclick="openCreateDatabaseModal()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Create Database
+                        </button>
+                    </div>
+
+                    <div class="databases-grid" id="databasesGrid">
+                        <!-- Databases will be populated here -->
+                    </div>
+                </div>
+
+                <!-- API Management Section -->
+                <div class="api-panel">
+                    <div class="api-header">
+                        <h3 class="api-title">API Management</h3>
+                        <button class="create-api-btn" onclick="openCreateAPIModal()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                            Create API
+                        </button>
+                    </div>
+
+                    <div class="apis-grid" id="apisGrid">
+                        <!-- APIs will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Footer Navigation -->
+                <div class="client-footer">
+                    <div class="footer-nav">
+                        <a href="#" class="footer-link" onclick="navigateToStore()">
+                            <div class="footer-icon">🏪</div>
+                            <span>Store</span>
+                        </a>
+                        <a href="#" class="footer-link" onclick="navigateToWorkOrder()">
+                            <div class="footer-icon">📋</div>
+                            <span>Work Order</span>
+                        </a>
+                        <a href="#" class="footer-link" onclick="openBugReport()">
+                            <div class="footer-icon">🐛</div>
+                            <span>Submit Bug</span>
+                        </a>
+                        <a href="#" class="footer-link" onclick="openHelp()">
+                            <div class="footer-icon">❓</div>
+                            <span>Need Help</span>
+                        </a>
+                        <a href="#" class="footer-link active" onclick="toggleAIChatbot()">
+                            <div class="footer-icon">💬</div>
+                            <span>AI Chat</span>
+                        </a>
+                        <a href="#" class="footer-link" onclick="openBackpack()">
+                            <div class="footer-icon">🎒</div>
+                            <span>Backpack</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Blob Modal -->
+    <div id="createBlobModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New Blob</h3>
+                <button class="close-btn" onclick="closeCreateBlobModal()">&times;</button>
+            </div>
+
+            <form id="createBlobForm">
+                <div class="form-group">
+                    <label class="form-label" for="blobTitle">Blob Title</label>
+                    <input type="text" id="blobTitle" name="title" class="form-input" placeholder="Enter blob title" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="blobType">Blob Type</label>
+                    <select id="blobType" name="type" class="form-select" required onchange="updateBlobTypePreview()">
+                        <option value="">Select type</option>
+                        <option value="button">Button/Link</option>
+                        <option value="text">Text Content</option>
+                        <option value="app">Embedded App</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="buttonGroup" style="display: none;">
+                    <label class="form-label" for="buttonText">Button Text</label>
+                    <input type="text" id="buttonText" name="buttonText" class="form-input" placeholder="Click me!">
+
+                    <label class="form-label" for="buttonLink" style="margin-top: 1rem;">Button Link (optional)</label>
+                    <input type="url" id="buttonLink" name="buttonLink" class="form-input" placeholder="https://example.com">
+                </div>
+
+                <div class="form-group" id="textGroup" style="display: none;">
+                    <label class="form-label" for="textContent">Text Content</label>
+                    <textarea id="textContent" name="textContent" class="form-textarea" placeholder="Enter your text content here..."></textarea>
+                </div>
+
+                <div class="form-group" id="appGroup" style="display: none;">
+                    <label class="form-label" for="appType">App Type</label>
+                    <select id="appType" name="appType" class="form-select">
+                        <option value="calculator">Calculator</option>
+                        <option value="notes">Notes</option>
+                        <option value="timer">Timer</option>
+                        <option value="weather">Weather</option>
+                        <option value="custom">Custom App</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateBlobModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Blob</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu" style="display: none;">
+        <div class="context-menu-item" onclick="editBlob()">Edit Blob</div>
+        <div class="context-menu-item" onclick="duplicateBlob()">Duplicate</div>
+        <div class="context-menu-item" onclick="deleteBlob()">Delete</div>
+    </div>
+
+    <!-- AI Chatbot -->
+    <div id="aiChatbot" class="ai-chatbot">
+        <div class="chatbot-header">
+            <div class="chatbot-title">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                </svg>
+                AI Assistant
+            </div>
+            <button onclick="toggleAIChatbot()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">×</button>
+        </div>
+        <div class="chatbot-messages" id="chatbotMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Hello! I'm your AI assistant. I can help you with:
+                    <br>• Business analytics and insights
+                    <br>• Data retrieval and queries
+                    <br>• Task automation suggestions
+                    <br>• Client management guidance
+                    <br><br>How can I assist you today?
+                </div>
+            </div>
+        </div>
+        <div class="chatbot-input">
+            <input type="text" id="chatbotInput" class="chatbot-input-field" placeholder="Ask me anything..." onkeypress="handleChatKeyPress(event)">
+            <button onclick="sendChatMessage()" class="chatbot-send-btn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Edit Layout Modal -->
+    <div id="editLayoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Dashboard Layout</h3>
+                <button class="close-btn" onclick="closeEditLayoutModal()">&times;</button>
+            </div>
+
+            <div style="padding: 1rem 0;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <h4 style="margin-bottom: 1rem; font-weight: 600;">Layout Options</h4>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="showKPIs" checked> Show KPI Cards
+                        </label>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="showCharts" checked> Show Charts
+                        </label>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="showTickets" checked> Show Tickets
+                        </label>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="showDocuments" checked> Show Documents
+                        </label>
+                    </div>
+
+                    <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <h4 style="margin-bottom: 1rem; font-weight: 600;">Theme Options</h4>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="radio" name="theme" value="light" checked> Light Theme
+                        </label>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="radio" name="theme" value="dark"> Dark Theme
+                        </label>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="radio" name="theme" value="auto"> Auto Theme
+                        </label>
+                    </div>
+                </div>
+
+                <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 1rem; font-weight: 600;">Widget Order</h4>
+                    <div id="widgetOrder" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div class="draggable-widget" data-widget="kpis">KPI Cards</div>
+                        <div class="draggable-widget" data-widget="highlights">AI Highlights</div>
+                        <div class="draggable-widget" data-widget="summary">AI Assistant Summary</div>
+                        <div class="draggable-widget" data-widget="campaign">Campaign Performance</div>
+                        <div class="draggable-widget" data-widget="efficiency">Subcontractor Efficiency</div>
+                        <div class="draggable-widget" data-widget="tickets">Open Tickets</div>
+                        <div class="draggable-widget" data-widget="documents">Financial Documents</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeEditLayoutModal()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="saveLayoutChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Database Modal -->
+    <div id="createDatabaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New Database</h3>
+                <button class="close-btn" onclick="closeCreateDatabaseModal()">&times;</button>
+            </div>
+
+            <form id="createDatabaseForm">
+                <div style="padding: 1rem 0;">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Database Name</label>
+                        <input type="text" id="dbName" name="dbName" class="form-input" placeholder="e.g., Customer Database" required>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Database Type</label>
+                        <select id="dbType" name="dbType" class="form-select" required>
+                            <option value="">Select type</option>
+                            <option value="postgresql">PostgreSQL</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="mongodb">MongoDB</option>
+                            <option value="sqlite">SQLite</option>
+                            <option value="redis">Redis</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Connection String</label>
+                        <input type="text" id="dbConnection" name="dbConnection" class="form-input" placeholder="e.g., postgresql://user:pass@localhost:5432/dbname">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Description</label>
+                        <textarea id="dbDescription" name="dbDescription" class="form-textarea" placeholder="Database description and purpose"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateDatabaseModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create API Modal -->
+    <div id="createAPIModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New API</h3>
+                <button class="close-btn" onclick="closeCreateAPIModal()">&times;</button>
+            </div>
+
+            <form id="createAPIForm">
+                <div style="padding: 1rem 0;">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">API Name</label>
+                        <input type="text" id="apiName" name="apiName" class="form-input" placeholder="e.g., CRM Integration API" required>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">API Endpoint</label>
+                        <input type="url" id="apiEndpoint" name="apiEndpoint" class="form-input" placeholder="https://api.example.com/v1/" required>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Authentication Type</label>
+                        <select id="apiAuth" name="apiAuth" class="form-select" required>
+                            <option value="">Select type</option>
+                            <option value="none">No Authentication</option>
+                            <option value="bearer">Bearer Token</option>
+                            <option value="apikey">API Key</option>
+                            <option value="basic">Basic Auth</option>
+                            <option value="oauth">OAuth 2.0</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">API Key/Token (optional)</label>
+                        <input type="password" id="apiKey" name="apiKey" class="form-input" placeholder="Enter API key or token">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Description</label>
+                        <textarea id="apiDescription" name="apiDescription" class="form-textarea" placeholder="API description and purpose"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateAPIModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create API</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let blobs = [];
+        let selectedBlob = null;
+        let isDragging = false;
+        let isResizing = false;
+        let dragOffset = { x: 0, y: 0 };
+        let currentPage = 'workspace';
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadWorkspaceFromStorage();
+            updateStats();
+        });
+
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.getAttribute('data-page');
+                    navigateToPage(page);
+                });
+            });
+
+            // Client portal dropdown
+            const clientPortalDropdown = document.getElementById('clientPortalDropdown');
+            const dropdownToggle = clientPortalDropdown.querySelector('.nav-dropdown-toggle');
+            const dropdownItems = clientPortalDropdown.querySelectorAll('.dropdown-item');
+
+            dropdownToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                clientPortalDropdown.classList.toggle('active');
+            });
+
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = item.getAttribute('data-page');
+                    navigateToPage(page);
+                    clientPortalDropdown.classList.remove('active');
+
+                    // Update active dropdown item
+                    dropdownItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!clientPortalDropdown.contains(e.target)) {
+                    clientPortalDropdown.classList.remove('active');
+                }
+            });
+
+            // Workspace canvas events
+            const canvas = document.getElementById('workspaceCanvas');
+            canvas.addEventListener('mousedown', handleCanvasClick);
+            canvas.addEventListener('contextmenu', handleContextMenu);
+
+            // Create blob form
+            document.getElementById('createBlobForm').addEventListener('submit', handleCreateBlob);
+
+            // Global events
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('keydown', handleKeyDown);
+        }
+
+        function navigateToPage(page) {
+            currentPage = page;
+
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Update dropdown active state
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === page) {
+                    item.classList.add('active');
+                    // Also activate the dropdown toggle
+                    const dropdown = item.closest('.nav-dropdown');
+                    dropdown.querySelector('.nav-dropdown-toggle').classList.add('active');
+                }
+            });
+
+            // Update page title
+            const pageTitles = {
+                'workspace': 'Workspace',
+                'profile': 'Profile',
+                'client-dashboard': 'Client AI Dashboard',
+                'client-analytics': 'Analytics & Reports',
+                'client-campaigns': 'Campaign Management',
+                'client-finance': 'Financial Overview'
+            };
+            const pageTitle = document.querySelector('.page-title');
+            pageTitle.textContent = pageTitles[page] || page.charAt(0).toUpperCase() + page.slice(1);
+
+            // Show/hide pages
+            document.querySelectorAll('.profile-page, .client-dashboard-page').forEach(p => p.style.display = 'none');
+            document.querySelector('.workspace').style.display = 'none';
+
+            if (page === 'workspace') {
+                document.querySelector('.workspace').style.display = 'block';
+                document.querySelector('.workspace-toolbar').style.display = 'flex';
+            } else if (page === 'profile') {
+                document.getElementById('profilePage').style.display = 'block';
+                document.querySelector('.workspace-toolbar').style.display = 'none';
+            } else if (page.startsWith('client-')) {
+                document.getElementById('clientDashboardPage').style.display = 'block';
+                document.querySelector('.workspace-toolbar').style.display = 'none';
+            }
+        }
+
+        function showCreateBlobModal() {
+            document.getElementById('createBlobModal').style.display = 'block';
+        }
+
+        function closeCreateBlobModal() {
+            document.getElementById('createBlobModal').style.display = 'none';
+            document.getElementById('createBlobForm').reset();
+            hideBlobTypeGroups();
+        }
+
+        function updateBlobTypePreview() {
+            const type = document.getElementById('blobType').value;
+            hideBlobTypeGroups();
+
+            if (type === 'button') {
+                document.getElementById('buttonGroup').style.display = 'block';
+            } else if (type === 'text') {
+                document.getElementById('textGroup').style.display = 'block';
+            } else if (type === 'app') {
+                document.getElementById('appGroup').style.display = 'block';
+            }
+        }
+
+        function hideBlobTypeGroups() {
+            document.getElementById('buttonGroup').style.display = 'none';
+            document.getElementById('textGroup').style.display = 'none';
+            document.getElementById('appGroup').style.display = 'none';
+        }
+
+        function handleCreateBlob(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const blobData = {
+                id: Date.now(),
+                title: formData.get('title'),
+                type: formData.get('type'),
+                x: Math.random() * 500 + 100,
+                y: Math.random() * 300 + 100,
+                width: 300,
+                height: 200,
+                content: {}
+            };
+
+            // Add type-specific content
+            if (blobData.type === 'button') {
+                blobData.content = {
+                    buttonText: formData.get('buttonText') || 'Click Me!',
+                    buttonLink: formData.get('buttonLink') || '#'
+                };
+            } else if (blobData.type === 'text') {
+                blobData.content = {
+                    text: formData.get('textContent') || 'Enter your text here...'
+                };
+            } else if (blobData.type === 'app') {
+                blobData.content = {
+                    appType: formData.get('appType') || 'calculator'
+                };
+            }
+
+            blobs.push(blobData);
+            renderBlob(blobData);
+            saveWorkspaceToStorage();
+            updateStats();
+            closeCreateBlobModal();
+        }
+
+        function renderBlob(blobData) {
+            const canvas = document.getElementById('workspaceCanvas');
+            const blob = document.createElement('div');
+            blob.className = 'blob';
+            blob.id = `blob-${blobData.id}`;
+            blob.style.left = `${blobData.x}px`;
+            blob.style.top = `${blobData.y}px`;
+            blob.style.width = `${blobData.width}px`;
+            blob.style.height = `${blobData.height}px`;
+
+            blob.innerHTML = `
+                <div class="blob-header">
+                    <div class="blob-title">${blobData.title}</div>
+                    <div class="blob-controls">
+                        <button class="blob-control blob-edit" onclick="editBlob(${blobData.id})">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button class="blob-control blob-delete" onclick="deleteBlob(${blobData.id})">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="blob-content">
+                    ${renderBlobContent(blobData)}
+                </div>
+                <div class="blob-resize"></div>
+            `;
+
+            // Add event listeners
+            const header = blob.querySelector('.blob-header');
+            header.addEventListener('mousedown', (e) => startDrag(e, blobData.id));
+
+            const resizeHandle = blob.querySelector('.blob-resize');
+            resizeHandle.addEventListener('mousedown', (e) => startResize(e, blobData.id));
+
+            blob.addEventListener('click', () => selectBlob(blobData.id));
+            blob.addEventListener('contextmenu', (e) => showContextMenu(e, blobData.id));
+
+            canvas.appendChild(blob);
+        }
+
+        function renderBlobContent(blobData) {
+            switch (blobData.type) {
+                case 'button':
+                    return `
+                        <div class="blob-button">
+                            <button class="blob-btn-large" onclick="handleBlobButton('${blobData.content.buttonLink}')">
+                                ${blobData.content.buttonText}
+                            </button>
+                        </div>
+                    `;
+                case 'text':
+                    return `
+                        <div class="blob-text">
+                            ${blobData.content.text.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                case 'app':
+                    return `
+                        <div class="blob-app">
+                            <div class="blob-app-header">
+                                <div class="blob-app-title">${blobData.content.appType.charAt(0).toUpperCase() + blobData.content.appType.slice(1)}</div>
+                                <div class="blob-app-subtitle">Embedded Application</div>
+                            </div>
+                            <div class="blob-app-content">
+                                <div class="blob-app-placeholder">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <div>${blobData.content.appType} app will be loaded here</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                default:
+                    return '<div>Unknown blob type</div>';
+            }
+        }
+
+        function handleBlobButton(link) {
+            if (link && link !== '#') {
+                window.open(link, '_blank');
+            } else {
+                alert('Button clicked! Configure a link in edit mode.');
+            }
+        }
+
+        function selectBlob(blobId) {
+            // Remove selection from all blobs
+            document.querySelectorAll('.blob').forEach(blob => blob.classList.remove('selected'));
+
+            // Select the clicked blob
+            const blob = document.getElementById(`blob-${blobId}`);
+            if (blob) {
+                blob.classList.add('selected');
+                selectedBlob = blobId;
+            }
+        }
+
+        function startDrag(e, blobId) {
+            if (e.target.closest('.blob-control')) return; // Don't drag if clicking controls
+
+            isDragging = true;
+            selectedBlob = blobId;
+            const blob = document.getElementById(`blob-${blobId}`);
+            const rect = blob.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+
+            blob.classList.add('dragging');
+            selectBlob(blobId);
+        }
+
+        function startResize(e, blobId) {
+            isResizing = true;
+            selectedBlob = blobId;
+            e.stopPropagation();
+        }
+
+        function handleMouseMove(e) {
+            if (isDragging && selectedBlob) {
+                const blob = document.getElementById(`blob-${selectedBlob}`);
+                const canvas = document.getElementById('workspaceCanvas');
+                const canvasRect = canvas.getBoundingClientRect();
+
+                let newX = e.clientX - canvasRect.left - dragOffset.x;
+                let newY = e.clientY - canvasRect.top - dragOffset.y;
+
+                // Constrain to canvas bounds
+                newX = Math.max(0, Math.min(newX, canvasRect.width - blob.offsetWidth));
+                newY = Math.max(0, Math.min(newY, canvasRect.height - blob.offsetHeight));
+
+                blob.style.left = `${newX}px`;
+                blob.style.top = `${newY}px`;
+            } else if (isResizing && selectedBlob) {
+                const blob = document.getElementById(`blob-${selectedBlob}`);
+                const rect = blob.getBoundingClientRect();
+                const newWidth = Math.max(200, e.clientX - rect.left);
+                const newHeight = Math.max(150, e.clientY - rect.top);
+
+                blob.style.width = `${newWidth}px`;
+                blob.style.height = `${newHeight}px`;
+            }
+        }
+
+        function handleMouseUp() {
+            if (isDragging) {
+                const blob = document.getElementById(`blob-${selectedBlob}`);
+                blob.classList.remove('dragging');
+                saveWorkspaceToStorage();
+            }
+            isDragging = false;
+            isResizing = false;
+        }
+
+        function handleCanvasClick(e) {
+            if (e.target === e.currentTarget) {
+                // Clicked on empty canvas
+                document.querySelectorAll('.blob').forEach(blob => blob.classList.remove('selected'));
+                selectedBlob = null;
+            }
+        }
+
+        function handleContextMenu(e) {
+            e.preventDefault();
+            const blob = e.target.closest('.blob');
+            if (blob) {
+                const blobId = parseInt(blob.id.replace('blob-', ''));
+                showContextMenu(e, blobId);
+            }
+        }
+
+        function showContextMenu(e, blobId) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = `${e.pageX}px`;
+            menu.style.top = `${e.pageY}px`;
+            menu.style.display = 'block';
+            selectedBlob = blobId;
+
+            // Hide menu when clicking elsewhere
+            document.addEventListener('click', hideContextMenu, { once: true });
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }
+
+        function editBlob(blobId = selectedBlob) {
+            if (!blobId) return;
+
+            const blob = blobs.find(b => b.id === blobId);
+            if (!blob) return;
+
+            // For now, just show an alert. In a full implementation, you'd open an edit modal
+            alert(`Edit blob: ${blob.title}\n\nEdit functionality would open a modal to modify blob properties.`);
+        }
+
+        function duplicateBlob(blobId = selectedBlob) {
+            if (!blobId) return;
+
+            const originalBlob = blobs.find(b => b.id === blobId);
+            if (!originalBlob) return;
+
+            const duplicatedBlob = {
+                ...originalBlob,
+                id: Date.now(),
+                title: `${originalBlob.title} (Copy)`,
+                x: originalBlob.x + 20,
+                y: originalBlob.y + 20
+            };
+
+            blobs.push(duplicatedBlob);
+            renderBlob(duplicatedBlob);
+            saveWorkspaceToStorage();
+            updateStats();
+        }
+
+        function deleteBlob(blobId = selectedBlob) {
+            if (!blobId) return;
+
+            if (confirm('Are you sure you want to delete this blob?')) {
+                blobs = blobs.filter(b => b.id !== blobId);
+                const blobElement = document.getElementById(`blob-${blobId}`);
+                if (blobElement) {
+                    blobElement.remove();
+                }
+                saveWorkspaceToStorage();
+                updateStats();
+            }
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Delete' && selectedBlob) {
+                deleteBlob(selectedBlob);
+            } else if (e.key === 'Escape') {
+                document.querySelectorAll('.blob').forEach(blob => blob.classList.remove('selected'));
+                selectedBlob = null;
+            }
+        }
+
+        function saveWorkspace() {
+            saveWorkspaceToStorage();
+            alert('Workspace saved successfully!');
+        }
+
+        function loadWorkspace() {
+            loadWorkspaceFromStorage();
+            alert('Workspace loaded successfully!');
+        }
+
+        function clearWorkspace() {
+            if (confirm('Are you sure you want to clear the entire workspace? This action cannot be undone.')) {
+                blobs = [];
+                document.getElementById('workspaceCanvas').innerHTML = '';
+                saveWorkspaceToStorage();
+                updateStats();
+            }
+        }
+
+        function saveWorkspaceToStorage() {
+            const workspaceData = {
+                blobs: blobs,
+                lastSaved: new Date().toISOString()
+            };
+            localStorage.setItem('flexWorkspace', JSON.stringify(workspaceData));
+
+            // Update blob positions and sizes
+            blobs.forEach(blob => {
+                const element = document.getElementById(`blob-${blob.id}`);
+                if (element) {
+                    blob.x = parseFloat(element.style.left);
+                    blob.y = parseFloat(element.style.top);
+                    blob.width = parseFloat(element.style.width) || 300;
+                    blob.height = parseFloat(element.style.height) || 200;
+                }
+            });
+        }
+
+        function loadWorkspaceFromStorage() {
+            const saved = localStorage.getItem('flexWorkspace');
+            if (saved) {
+                const workspaceData = JSON.parse(saved);
+                blobs = workspaceData.blobs || [];
+
+                // Clear existing blobs
+                document.getElementById('workspaceCanvas').innerHTML = '';
+
+                // Render saved blobs
+                blobs.forEach(blob => renderBlob(blob));
+            }
+        }
+
+        function updateStats() {
+            const totalBlobs = blobs.length;
+            const savedWorkspaces = localStorage.getItem('flexWorkspace') ? 1 : 0;
+            const lastUpdated = localStorage.getItem('flexWorkspace') ?
+                new Date(JSON.parse(localStorage.getItem('flexWorkspace')).lastSaved).toLocaleDateString() : 'Never';
+
+            document.getElementById('totalBlobsStat').textContent = totalBlobs;
+            document.getElementById('workspacesSavedStat').textContent = savedWorkspaces;
+            document.getElementById('lastUpdatedStat').textContent = lastUpdated;
+        }
+
+        // Sample blobs for demonstration
+        function createSampleBlobs() {
+            const sampleBlobs = [
+                {
+                    id: 1,
+                    title: 'Quick Actions',
+                    type: 'button',
+                    x: 50,
+                    y: 50,
+                    width: 250,
+                    height: 180,
+                    content: {
+                        buttonText: 'Open Business App',
+                        buttonLink: '#'
+                    }
+                },
+                {
+                    id: 2,
+                    title: 'Notes',
+                    type: 'text',
+                    x: 350,
+                    y: 50,
+                    width: 300,
+                    height: 200,
+                    content: {
+                        text: 'Welcome to your flexible workspace!\n\n• Drag blobs to move them\n• Right-click for options\n• Resize using the bottom-right handle\n• Create different types of content'
+                    }
+                },
+                {
+                    id: 3,
+                    title: 'Calculator App',
+                    type: 'app',
+                    x: 50,
+                    y: 280,
+                    width: 280,
+                    height: 220,
+                    content: {
+                        appType: 'calculator'
+                    }
+                }
+            ];
+
+            sampleBlobs.forEach(blob => {
+                blobs.push(blob);
+                renderBlob(blob);
+            });
+
+            saveWorkspaceToStorage();
+            updateStats();
+        }
+
+        // Create sample blobs if workspace is empty
+        setTimeout(() => {
+            if (blobs.length === 0) {
+                createSampleBlobs();
+            }
+        }, 100);
+
+        // Client Dashboard Functions
+        function openDocument(docType) {
+            const documents = {
+                'q4-pnl': {
+                    title: 'Q4 P&L Report',
+                    content: 'Quarterly Profit & Loss Report\n\nRevenue: $1,258,230\nExpenses: $813,180\nNet Profit: $445,050\n\nDetailed breakdown available in the full report.',
+                    type: 'pdf'
+                },
+                'invoice-4567': {
+                    title: 'Invoice 4567',
+                    content: 'Invoice Details:\nAmount: $12,450.00\nDue Date: November 25, 2025\nStatus: Pending Payment\n\nServices: Marketing Campaign Management',
+                    type: 'invoice'
+                }
+            };
+
+            const doc = documents[docType];
+            if (doc) {
+                // Create a modal to display document content
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h3 class="modal-title">${doc.title}</h3>
+                            <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                        </div>
+                        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; font-family: monospace; white-space: pre-line;">
+                            ${doc.content}
+                        </div>
+                        <div class="modal-actions" style="margin-top: 1rem;">
+                            <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                            <button type="button" class="btn-primary" onclick="downloadDocument('${docType}')">Download ${doc.type.toUpperCase()}</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.style.display = 'block';
+            }
+        }
+
+        function downloadDocument(docType) {
+            alert(`Downloading ${docType} document...\n\nIn a real application, this would download the actual file.`);
+        }
+
+        // Edit Layout Functions
+        document.querySelector('.edit-layout-btn').addEventListener('click', function() {
+            document.getElementById('editLayoutModal').style.display = 'block';
+        });
+
+        function closeEditLayoutModal() {
+            document.getElementById('editLayoutModal').style.display = 'none';
+        }
+
+        function saveLayoutChanges() {
+            const showKPIs = document.getElementById('showKPIs').checked;
+            const showCharts = document.getElementById('showCharts').checked;
+            const showTickets = document.getElementById('showTickets').checked;
+            const showDocuments = document.getElementById('showDocuments').checked;
+
+            // Hide/show sections based on preferences
+            document.querySelector('.kpi-grid').style.display = showKPIs ? 'grid' : 'none';
+            document.querySelectorAll('.dashboard-card').forEach(card => {
+                const title = card.querySelector('.card-title').textContent;
+                if (title.includes('Campaign') || title.includes('Subcontractor')) {
+                    card.style.display = showCharts ? 'block' : 'none';
+                } else if (title.includes('Tickets')) {
+                    card.style.display = showTickets ? 'block' : 'none';
+                } else if (title.includes('Documents')) {
+                    card.style.display = showDocuments ? 'block' : 'none';
+                }
+            });
+
+            alert('Layout preferences saved!');
+            closeEditLayoutModal();
+        }
+
+        // AI Chatbot Functions
+        function toggleAIChatbot() {
+            const chatbot = document.getElementById('aiChatbot');
+            chatbot.classList.toggle('show');
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addChatMessage(message, 'user');
+
+            // Clear input
+            input.value = '';
+
+            // Simulate AI response
+            setTimeout(() => {
+                const response = generateAIResponse(message);
+                addChatMessage(response, 'bot');
+            }, 1000);
+        }
+
+        function addChatMessage(message, type) {
+            const messagesDiv = document.getElementById('chatbotMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `<div class="message-content">${message}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+
+            // Business intelligence responses
+            if (lowerMessage.includes('revenue') || lowerMessage.includes('sales')) {
+                return "Based on your current data, total revenue for Q4 is $1,258,230 with a 15.3% increase from last year. Your top-performing business is Real Estate at $745K, followed by Fireworks at $513K. Would you like me to break this down further or show trend analysis?";
+            }
+
+            if (lowerMessage.includes('leads') || lowerMessage.includes('customers')) {
+                return "You currently have 1,247 active customers with 34 new leads today. Your customer retention rate is 85%, and the average project margin is 24.5%. The Marketing Department filter shows strong performance in lead generation. Is there a specific metric you'd like me to analyze?";
+            }
+
+            if (lowerMessage.includes('ai agent') || lowerMessage.includes('automation')) {
+                return "Your AI Email Agent is performing at 95% efficiency (v1.2), having automated 8 tasks and saved 12 hours of admin time this week. The Mother of AI Creator is at 88% efficiency. Both systems are operating normally with no safety issues detected.";
+            }
+
+            if (lowerMessage.includes('tickets') || lowerMessage.includes('issues')) {
+                return "You have 2 open tickets: 'Integrate Telegram' (High Priority) and 'Review Q1 Budget' (Medium Priority). The Telegram integration is pending, and the budget review is scheduled for next week. Would you like me to help prioritize or assign these tasks?";
+            }
+
+            if (lowerMessage.includes('database') || lowerMessage.includes('api')) {
+                return "You have access to database and API management tools in the dashboard below. Currently, you can create and manage databases (PostgreSQL, MySQL, MongoDB, etc.) and APIs with various authentication methods. Would you like guidance on setting up a new connection?";
+            }
+
+            if (lowerMessage.includes('campaign') || lowerMessage.includes('performance')) {
+                return "Your campaign performance shows consistent results across periods with a 3.1% CTR lift. Subcontractor efficiency is high at 90%+ across all metrics. The bar charts below show detailed breakdowns. Is there a specific campaign you'd like me to analyze?";
+            }
+
+            // Default responses
+            if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+                return "I can help you with:\n\n📊 Business Analytics - Revenue, leads, customer metrics\n🤖 AI Performance - Agent efficiency, automation tracking\n📋 Task Management - Open tickets, priorities\n💾 Database/API - Connection management\n📈 Performance Data - Charts, trends, insights\n\nWhat would you like to know about your business?";
+            }
+
+            if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+                return "You're welcome! I'm here whenever you need assistance with your business data, analytics, or operations. Feel free to ask me anything about your dashboard or performance metrics.";
+            }
+
+            // Generic responses
+            const genericResponses = [
+                "I understand you're asking about: \"" + message + "\". Based on your current dashboard data, I can provide insights on revenue trends, customer metrics, AI performance, and operational efficiency. Could you be more specific about what you'd like to know?",
+                "That's an interesting question about \"" + message + "\". Looking at your business data, I can see strong performance across multiple areas. Would you like me to dive deeper into any specific metrics or provide recommendations?",
+                "Regarding \"" + message + "\", your dashboard shows healthy business metrics with room for optimization. I can provide detailed analysis of your revenue streams, customer acquisition, and operational efficiency. What aspect would you like me to focus on?"
+            ];
+
+            return genericResponses[Math.floor(Math.random() * genericResponses.length)];
+        }
+
+        // Database Management Functions
+        let databases = [
+            {
+                id: 1,
+                name: 'Customer CRM Database',
+                type: 'postgresql',
+                connection: 'postgresql://user:pass@localhost:5432/crm',
+                tables: 12,
+                records: 1247,
+                status: 'connected'
+            },
+            {
+                id: 2,
+                name: 'Marketing Analytics DB',
+                type: 'mongodb',
+                connection: 'mongodb://localhost:27017/marketing',
+                collections: 8,
+                documents: 15420,
+                status: 'connected'
+            }
+        ];
+
+        function renderDatabases() {
+            const grid = document.getElementById('databasesGrid');
+            grid.innerHTML = '';
+
+            databases.forEach(db => {
+                const dbCard = document.createElement('div');
+                dbCard.className = 'database-card';
+
+                const typeLabels = {
+                    'postgresql': 'PostgreSQL',
+                    'mysql': 'MySQL',
+                    'mongodb': 'MongoDB',
+                    'sqlite': 'SQLite',
+                    'redis': 'Redis'
+                };
+
+                dbCard.innerHTML = `
+                    <div class="database-name">${db.name}</div>
+                    <div class="database-type">${typeLabels[db.type] || db.type}</div>
+                    <div class="database-stats">
+                        <div>
+                            <div class="stat-label">Tables/Collections</div>
+                            <div class="stat-value">${db.tables || db.collections || 0}</div>
+                        </div>
+                        <div>
+                            <div class="stat-label">Records/Documents</div>
+                            <div class="stat-value">${db.records || db.documents || 0}</div>
+                        </div>
+                    </div>
+                    <div class="database-actions">
+                        <button class="db-action-btn db-edit-btn" onclick="editDatabase(${db.id})">Edit</button>
+                        <button class="db-action-btn db-connect-btn" onclick="testDatabaseConnection(${db.id})">Test</button>
+                        <button class="db-action-btn db-delete-btn" onclick="deleteDatabase(${db.id})">Delete</button>
+                    </div>
+                `;
+
+                grid.appendChild(dbCard);
+            });
+        }
+
+        function openCreateDatabaseModal() {
+            document.getElementById('createDatabaseModal').style.display = 'block';
+        }
+
+        function closeCreateDatabaseModal() {
+            document.getElementById('createDatabaseModal').style.display = 'none';
+            document.getElementById('createDatabaseForm').reset();
+        }
+
+        document.getElementById('createDatabaseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const dbData = {
+                id: Date.now(),
+                name: formData.get('dbName'),
+                type: formData.get('dbType'),
+                connection: formData.get('dbConnection'),
+                description: formData.get('dbDescription'),
+                tables: 0,
+                records: 0,
+                status: 'disconnected'
+            };
+
+            databases.push(dbData);
+            renderDatabases();
+            closeCreateDatabaseModal();
+
+            alert(`Database "${dbData.name}" created successfully!`);
+        });
+
+        function editDatabase(id) {
+            const db = databases.find(d => d.id === id);
+            if (!db) return;
+
+            alert(`Edit database: ${db.name}\n\nIn a full implementation, this would open an edit modal with current values.`);
+        }
+
+        function testDatabaseConnection(id) {
+            const db = databases.find(d => d.id === id);
+            if (!db) return;
+
+            // Simulate connection test
+            alert(`Testing connection to ${db.name}...\n\nConnection successful! Database is online and accessible.`);
+        }
+
+        function deleteDatabase(id) {
+            const db = databases.find(d => d.id === id);
+            if (!db) return;
+
+            if (confirm(`Are you sure you want to delete the database "${db.name}"? This action cannot be undone.`)) {
+                databases = databases.filter(d => d.id !== id);
+                renderDatabases();
+            }
+        }
+
+        // API Management Functions
+        let apis = [
+            {
+                id: 1,
+                name: 'CRM Integration API',
+                endpoint: 'https://api.crm-service.com/v1/',
+                auth: 'bearer',
+                status: 'active',
+                calls: 1250,
+                errors: 2,
+                responseTime: '120ms'
+            },
+            {
+                id: 2,
+                name: 'Email Marketing API',
+                endpoint: 'https://api.email-service.com/v2/',
+                auth: 'apikey',
+                status: 'active',
+                calls: 890,
+                errors: 0,
+                responseTime: '95ms'
+            },
+            {
+                id: 3,
+                name: 'Payment Processing API',
+                endpoint: 'https://api.payment-gateway.com/v3/',
+                auth: 'oauth',
+                status: 'inactive',
+                calls: 0,
+                errors: 0,
+                responseTime: 'N/A'
+            }
+        ];
+
+        function renderAPIs() {
+            const grid = document.getElementById('apisGrid');
+            grid.innerHTML = '';
+
+            apis.forEach(api => {
+                const apiCard = document.createElement('div');
+                apiCard.className = 'api-card';
+
+                const authLabels = {
+                    'none': 'No Auth',
+                    'bearer': 'Bearer Token',
+                    'apikey': 'API Key',
+                    'basic': 'Basic Auth',
+                    'oauth': 'OAuth 2.0'
+                };
+
+                apiCard.innerHTML = `
+                    <div class="api-name">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                        </svg>
+                        ${api.name}
+                    </div>
+                    <div class="api-endpoint">${api.endpoint}</div>
+                    <span class="api-status ${api.status}">${api.status.charAt(0).toUpperCase() + api.status.slice(1)}</span>
+                    <div class="api-stats">
+                        <div>
+                            <div class="stat-label">Calls</div>
+                            <div class="stat-value">${api.calls}</div>
+                        </div>
+                        <div>
+                            <div class="stat-label">Errors</div>
+                            <div class="stat-value">${api.errors}</div>
+                        </div>
+                        <div>
+                            <div class="stat-label">Response</div>
+                            <div class="stat-value">${api.responseTime}</div>
+                        </div>
+                    </div>
+                    <div class="api-actions">
+                        <button class="api-action-btn api-test-btn" onclick="testAPI(${api.id})">Test</button>
+                        <button class="api-action-btn api-edit-btn" onclick="editAPI(${api.id})">Edit</button>
+                        <button class="api-action-btn api-delete-btn" onclick="deleteAPI(${api.id})">Delete</button>
+                    </div>
+                `;
+
+                grid.appendChild(apiCard);
+            });
+        }
+
+        function openCreateAPIModal() {
+            document.getElementById('createAPIModal').style.display = 'block';
+        }
+
+        function closeCreateAPIModal() {
+            document.getElementById('createAPIModal').style.display = 'none';
+            document.getElementById('createAPIForm').reset();
+        }
+
+        document.getElementById('createAPIForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const apiData = {
+                id: Date.now(),
+                name: formData.get('apiName'),
+                endpoint: formData.get('apiEndpoint'),
+                auth: formData.get('apiAuth'),
+                status: 'active',
+                calls: 0,
+                errors: 0,
+                responseTime: 'N/A'
+            };
+
+            apis.push(apiData);
+            renderAPIs();
+            closeCreateAPIModal();
+
+            alert(`API "${apiData.name}" created successfully!`);
+        });
+
+        function testAPI(id) {
+            const api = apis.find(a => a.id === id);
+            if (!api) return;
+
+            // Simulate API test
+            alert(`Testing API: ${api.name}\n\n✅ Endpoint reachable\n✅ Authentication successful\n⚡ Response time: ${Math.floor(Math.random() * 200) + 50}ms\n\nAPI is working correctly!`);
+        }
+
+        function editAPI(id) {
+            const api = apis.find(a => a.id === id);
+            if (!api) return;
+
+            alert(`Edit API: ${api.name}\n\nIn a full implementation, this would open an edit modal with current values.`);
+        }
+
+        function deleteAPI(id) {
+            const api = apis.find(a => a.id === id);
+            if (!api) return;
+
+            if (confirm(`Are you sure you want to delete the API "${api.name}"? This action cannot be undone.`)) {
+                apis = apis.filter(a => a.id !== id);
+                renderAPIs();
+            }
+        }
+
+        // Footer Navigation Functions
+        function navigateToStore() {
+            alert('Opening Store...\n\nThis would navigate to your product catalog and e-commerce management system.');
+        }
+
+        function navigateToWorkOrder() {
+            alert('Opening Work Orders...\n\nThis would show your service request management system with pending jobs, scheduling, and technician assignments.');
+        }
+
+        function openBugReport() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Submit Bug Report</h3>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <form style="padding: 1rem 0;">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Bug Title</label>
+                            <input type="text" class="form-input" placeholder="Brief description of the issue" required>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Severity</label>
+                            <select class="form-select" required>
+                                <option value="low">Low - Minor issue</option>
+                                <option value="medium">Medium - Affects functionality</option>
+                                <option value="high">High - Critical issue</option>
+                                <option value="urgent">Urgent - System down</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Description</label>
+                            <textarea class="form-textarea" placeholder="Detailed description of the bug and steps to reproduce" required></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                            <button type="submit" class="btn-primary">Submit Bug Report</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        function openHelp() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Help & Support</h3>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <div style="padding: 1rem 0;">
+                        <h4 style="margin-bottom: 1rem; color: #1e293b;">Quick Help Topics</h4>
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Getting Started</h5>
+                                <p style="color: var(--secondary-color); margin: 0;">Learn how to navigate the dashboard and use key features.</p>
+                            </div>
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">AI Assistant</h5>
+                                <p style="color: var(--secondary-color); margin: 0;">Get help with business analytics, data queries, and insights.</p>
+                            </div>
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Database Management</h5>
+                                <p style="color: var(--secondary-color); margin: 0;">Connect and manage your databases and APIs.</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 2rem; text-align: center;">
+                            <p style="color: var(--secondary-color); margin-bottom: 1rem;">Can't find what you need?</p>
+                            <button class="btn-primary" onclick="toggleAIChatbot(); this.closest('.modal').remove();">Ask AI Assistant</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        function openBackpack() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Resource Backpack</h3>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <div style="padding: 1rem 0;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Templates</h5>
+                                <p style="color: var(--secondary-color); font-size: 0.875rem;">Business templates and documents</p>
+                            </div>
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Reports</h5>
+                                <p style="color: var(--secondary-color); font-size: 0.875rem;">Generated reports and analytics</p>
+                            </div>
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Goals</h5>
+                                <p style="color: var(--secondary-color); font-size: 0.875rem;">Business objectives and KPIs</p>
+                            </div>
+                            <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📈</div>
+                                <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Insights</h5>
+                                <p style="color: var(--secondary-color); font-size: 0.875rem;">AI-generated business insights</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        // Initialize client dashboard on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderDatabases();
+            renderAPIs();
+            console.log('Client Portal Dashboard initialized');
+        });
+    </script>
+</body>
+</html>
+
+
+
